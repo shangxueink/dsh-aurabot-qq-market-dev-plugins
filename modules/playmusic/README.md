@@ -1,4 +1,4 @@
-# 语音点歌（shangxue-playmusic）
+# 语音点歌（shangxueink/playmusic）
 
 说「点歌 xxx」，机器人去**哔哩哔哩 / 网易云**搜原唱，下载后抽成 mp3，以**语音条**发回当前会话。
 只点原唱，不做翻唱 / 变声；也不需要任何 Cookie——哔哩走星之阁第三方接口，网易云走公开搜索 + Meting 直链。
@@ -32,14 +32,14 @@
 
 ## 安装
 
-1. 把模块目录（或 CI 构建出的发布包）放到 `.../aurabot/modules/shangxue-playmusic/`。
+1. 把 CI 构建出的发布包解压到 `.../aurabot/modules/shangxueink/playmusic/`。
 2. 确认本机有 **ffmpeg**：`PLAYMUSIC_FFMPEG` / `AURABOT_FFMPEG`、常见盘符路径、`PATH` 三选一。
    `/status` 路由能看到 `ffmpegOk`。
 3. 面板里按需调配置即可。
 
 ## 问题反馈
 
-到 [aureth-labs/dsh-aurabot-qq-mods](https://github.com/aureth-labs/dsh-aurabot-qq-mods/issues) 提 Issue，
+到 [shangxueink/dsh-aurabot-qq-market-dev-plugins](https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/issues) 提 Issue，
 正文里 `@shangxueink` 并把 **shangxueink** assign 为负责人。请附上复现步骤和 `/status` 输出。
 
 ## 开发

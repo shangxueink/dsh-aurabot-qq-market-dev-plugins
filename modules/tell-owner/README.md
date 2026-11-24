@@ -1,4 +1,4 @@
-# 转告主人反馈（shangxue-tell-owner）
+# 转告主人反馈（shangxueink/tell-owner）
 
 群里 / 私聊有人托话，机器人记成一张「工单」送到主人私聊；主人处理完，机器人回到原会话，**引用原消息 @ 当事人**回复。
 转述由主模型（有人格、有记忆）用自然口吻完成，不是代码拼模板。
@@ -37,13 +37,13 @@
 
 ## 安装
 
-把整个模块目录放进 AuraBot 的模块目录，面板里填好主人 QQ（`config.ownerQQ`），启用即可。
+解压发布包到 `.../aurabot/modules/shangxueink/tell-owner/`，面板里填好主人 QQ（`config.ownerQQ`），启用即可。
 
 数据都在 `data/`：`tickets.json`（工单）、`tickets.md`（可读镜像）、`media/`（附件）。
 
 ## 问题反馈
 
-到 [aureth-labs/dsh-aurabot-qq-mods](https://github.com/aureth-labs/dsh-aurabot-qq-mods/issues) 提 Issue，
+到 [shangxueink/dsh-aurabot-qq-market-dev-plugins](https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/issues) 提 Issue，
 正文里 `@shangxueink` 并把 **shangxueink** assign 为负责人。请附上复现步骤和相关日志。
 
 ## 开发
