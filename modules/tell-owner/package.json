@@ -22,7 +22,12 @@
     "platforms": [
       "qq"
     ],
-    "requires": []
+    "requires": [],
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/shangxueink-tell-owner-v1.0.1/shangxueink-tell-owner-v1.0.1.zip",
+      "sha256": "bd2deaa0b4d380037f488a06f5c6539f66093ec283462355fbfdbea830ea8e85",
+      "size": 19643
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

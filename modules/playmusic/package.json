@@ -21,7 +21,12 @@
     "platforms": [
       "qq"
     ],
-    "requires": []
+    "requires": [],
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/shangxueink-playmusic-v1.0.0/shangxueink-playmusic-v1.0.0.zip",
+      "sha256": "c5b4a15c5d89c7a7fc86dd182d43106bd0a23af99e071aa3d8fedffd4d4d946e",
+      "size": 20028
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
