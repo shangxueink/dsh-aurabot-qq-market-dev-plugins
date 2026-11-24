@@ -1,0 +1,12 @@
+{
+  "name": "aurabot-market-plugins",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AuraBot 插件市场示例仓库：两个可直接用的插件，push 即自动构建发版",
+  "license": "MIT",
+  "scripts": {
+    "release": "node scripts/release.mjs",
+    "dry-run": "node scripts/release.mjs --dry-run"
+  }
+}

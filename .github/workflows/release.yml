@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'modules/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 构建并发布版本变过的模块
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release.mjs
