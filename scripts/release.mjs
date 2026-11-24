@@ -161,12 +161,18 @@ function main() {
   }
 
   run('git', ['add', '-A'], ROOT)
+  let dirty = true
   try {
-    run('git', ['commit', '-m', 'chore: 回写构建产物 [skip ci]'], ROOT)
+    execFileSync('git', ['diff', '--cached', '--quiet'], { cwd: ROOT, stdio: 'ignore' })
+    dirty = false
   } catch {
+    dirty = true
+  }
+  if (!dirty) {
     console.log('产物和上次一致，没有需要提交的回写')
     return
   }
+  run('git', ['-c', 'user.name=aurabot-bot', '-c', 'user.email=aurabot-bot@users.noreply.github.com', 'commit', '-m', 'chore: 回写构建产物 [skip ci]'], ROOT)
   run('git', ['push'], ROOT)
 }
 
