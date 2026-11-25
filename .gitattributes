@@ -1,0 +1,15 @@
+# 换行：仓库里统一存 LF，检出时由 core.autocrlf 决定
+* text=auto
+
+# 二进制文件别做文本转换
+*.png -text
+*.jpg -text
+*.ico -text
+*.gif -text
+*.webp -text
+*.woff2 -text
+
+# GitHub 语言统计：只算插件源码，测试与脚本不参与
+* linguist-vendored
+modules/*/src/** -linguist-vendored
+modules/*/client/** -linguist-vendored
