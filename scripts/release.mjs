@@ -76,7 +76,7 @@ function collect(dir, main) {
   for (const name of ['package.json', 'README.md', 'LICENSE']) {
     if (existsSync(join(dir, name))) names.push(name)
   }
-  for (const sub of ['lib', 'client', 'assets', 'docs']) {
+  for (const sub of ['lib', 'dist', 'assets', 'docs']) {
     if (existsSync(join(dir, sub))) names.push(...walk(join(dir, sub), dir))
   }
   if (!names.includes(main)) throw new Error(`构建后找不到入口 ${main}，检查 package.json 的 main 和 tsconfig 的 outDir`)

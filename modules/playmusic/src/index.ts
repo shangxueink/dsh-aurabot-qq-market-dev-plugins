@@ -87,13 +87,13 @@ function esc(text: string): string {
 }
 
 export default {
-  id: 'shangxueink/playmusic',
+  id: 'playmusic',
   name: '语音点歌',
   version: '1.0.0',
   api: 1,
   description:
     '点歌：按配置在哔哩哔哩 / 网易云搜原唱，挑最优一首下载后抽成 mp3 发语音条（这是省算力的点歌通道，不占用唱歌/翻唱）',
-  panel: './client/panel.js',
+  panel: './dist/panel.js',
   defaults: { ...DEFAULTS },
   settings: [
     {

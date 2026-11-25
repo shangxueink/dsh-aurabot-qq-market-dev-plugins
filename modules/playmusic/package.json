@@ -1,6 +1,6 @@
 {
-  "name": "shangxueink/playmusic",
-  "version": "1.0.0",
+  "name": "playmusic",
+  "version": "1.0.1",
   "description": "点歌：搜哔哩哔哩/网易云的原唱，按匹配度挑最优一首，下载后抽成 mp3 当语音条发到当前会话。不需要任何 Cookie",
   "type": "module",
   "private": true,
@@ -9,7 +9,7 @@
   "main": "lib/index.js",
   "aurabot": {
     "displayName": "语音点歌",
-    "panel": "./client/panel.js",
+    "panel": "./dist/panel.js",
     "category": "social",
     "capabilities": [
       "filesystem",
@@ -21,16 +21,11 @@
     "platforms": [
       "qq"
     ],
-    "requires": [],
-    "artifact": {
-      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/shangxueink-playmusic-v1.0.0/shangxueink-playmusic-v1.0.0.zip",
-      "sha256": "c5b4a15c5d89c7a7fc86dd182d43106bd0a23af99e071aa3d8fedffd4d4d946e",
-      "size": 20028
-    }
+    "requires": []
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "check": "tsc -p tsconfig.json --noEmit",
+    "build": "node build.mjs",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "test": "npm run build && node --test \"test/*.test.mjs\""
   },
   "devDependencies": {

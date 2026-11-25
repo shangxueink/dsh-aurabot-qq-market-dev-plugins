@@ -22,16 +22,17 @@ https://raw.githubusercontent.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/
 .github/workflows/release.yml   # push 后构建 + 发 Release + 回写 artifact
 scripts/release.mjs             # workflow 调用的脚本
 modules/<name>/
-├─ package.json      # 唯一清单：name(=scope/name) / version / aurabot 段
-├─ tsconfig.json     # NodeNext，src → lib
+├─ package.json      # 唯一清单：name(包名本身) / version / aurabot 段
+├─ tsconfig.json     # 后台：NodeNext，src → lib
+├─ tsconfig.client.json  # 面板：client → dist
 ├─ src/index.ts      # 入口，默认导出插件对象
-├─ client/panel.js   # 面板（aurabot.panel 默认路径）
+├─ client/panel.ts   # 面板源码，编译成 dist/panel.js
 ├─ test/             # 不进发布包
 ├─ README.md
 └─ LICENSE
 ```
 
-`package.json` 的 `name` 必须是 `你的GitHub用户名/模块名`，不带 `@`；`type` 必须是 `module`。市场只认这两条规则加上 `aurabot` 段。
+`package.json` 的 `name` 只写包名本身（小写字母/数字/`-`），**不要加用户名前缀、不要带 @**——市场构建时用仓库 owner 拼成 `owner/name`。`type` 必须是 `module`。
 
 ## 加自己的插件
 

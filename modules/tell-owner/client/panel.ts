@@ -1,5 +1,14 @@
 
-return function TellOwnerPanel(props) {
+declare const React: any
+declare const h: any
+declare const ui: any
+declare const call: (path: string, body?: any) => Promise<any>
+
+interface PanelProps {
+  toast(message: string, kind?: string): void
+}
+
+export default function TellOwnerPanel(props: PanelProps) {
   var toast = props.toast;
   var rowsState = React.useState(null);
   var rows = rowsState[0];
@@ -25,7 +34,7 @@ return function TellOwnerPanel(props) {
 
   React.useEffect(function () { load(); }, []);
 
-  function saveLimit(n) {
+  function saveLimit(n: number) {
     setPerUser(n);
     setSaving(true);
     call('/set-limit', { perUserPerDay: n })
@@ -37,7 +46,7 @@ return function TellOwnerPanel(props) {
       .catch(function (e) { toast(e.message, 'err'); setSaving(false); });
   }
 
-  function doReset(userId) {
+  function doReset(userId: string) {
     setBusy(userId);
     call('/reset', { userId: userId })
       .then(function (r) {
@@ -57,8 +66,8 @@ return function TellOwnerPanel(props) {
   },
     h(ui.Range, {
       min: 1, max: 10, step: 1, value: perUser,
-      onChange: function (v) { saveLimit(v); },
-      fmt: function (v) { return v + ' 条'; },
+      onChange: function (v: number) { saveLimit(v); },
+      fmt: function (v: number) { return v + ' 条'; },
     }),
     saving ? h('span', { className: 'ab-small ab-muted' }, ' 保存中…') : null);
 
@@ -78,7 +87,7 @@ return function TellOwnerPanel(props) {
       return h('th', { key: c, style: thStyle }, c);
     });
 
-    var trs = rows.map(function (r) {
+    var trs = rows.map(function (r: any) {
       var nameCell = h('td', { style: tdStyle },
         h('b', null, r.nickname || '（未知昵称）'),
         h('span', { className: 'ab-small ab-muted' }, ' (' + r.userId + ')'));
@@ -115,4 +124,4 @@ return function TellOwnerPanel(props) {
   return h('div', { className: 'ab-grid' },
     limitCard,
     h(ui.Card, { title: title, desc: desc }, body));
-};
+}

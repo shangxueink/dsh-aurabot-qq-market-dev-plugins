@@ -1,4 +1,13 @@
-return function PlaymusicPanel(props) {
+declare const React: any
+declare const h: any
+declare const ui: any
+declare const call: (path: string, body?: any) => Promise<any>
+
+interface PanelProps {
+  toast(message: string, kind?: string): void
+}
+
+export default function PlaymusicPanel(props: PanelProps) {
   var toast = props.toast;
   var state = React.useState(null);
   var info = state[0];
@@ -32,4 +41,4 @@ return function PlaymusicPanel(props) {
   var button = h(ui.Btn, { onClick: load, disabled: busy }, busy ? '读取中…' : '刷新');
   return h('div', { className: 'ab-grid' },
     h(ui.Card, { title: '点歌状态', desc: '只读。检查本机 ffmpeg 与当前搜索配置。', extra: button }, body));
-};
+}
