@@ -22,7 +22,12 @@
     "platforms": [
       "qq"
     ],
-    "requires": []
+    "requires": [],
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/tell-owner-v1.0.2/tell-owner-v1.0.2.zip",
+      "sha256": "6c89f181cd7092edc552441841551021dc17ffd13c61faa232cff63bdd0052aa",
+      "size": 19628
+    }
   },
   "scripts": {
     "build": "node build.mjs",
