@@ -1,6 +1,6 @@
 {
   "name": "tell-owner",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "description": "群里/私聊有人托话，记成工单送达主人；主人处理完，机器人自己找对工单回群引用原消息告诉本人",
   "type": "module",
   "private": true,
@@ -33,6 +33,6 @@
   "devDependencies": {
     "@types/node": "^22.20.5",
     "typescript": "^5.6.3",
-    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.18.tgz"
+    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.19.tgz"
   }
 }

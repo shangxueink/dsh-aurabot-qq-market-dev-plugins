@@ -11,7 +11,7 @@ function fixture(dir = mkdtempSync(join(tmpdir(), 'ab-tickets-'))) {
   const owners = [{ platform: 'sandbox', botId: 'A', userId: 'owner' }, { platform: 'sandbox', botId: 'B', userId: 'owner' }]
   const ctx = { root: { config: { owners } }, config: {}, dataDir: () => dir, logger: { warn() {} },
     on: (e, fn) => handlers[e] = fn, command: () => ({ description: () => ({ action: fn => handlers.submit = fn }) }),
-    tool: fn => builders.push(fn), defineTool: spec => spec, chat: { speakersOf: () => [{ userId: 'friend' }] },
+    tool: fn => builders.push(fn), defineTool: spec => spec, chat: { turnSenders: () => ['friend'] },
     isOwner: (id, platform, botId) => owners.some(o => o.platform === platform && o.botId === botId && o.userId === id),
     server: { get: (p, fn) => routes.set(p, fn), post: (p, fn) => routes.set(p, fn) },
     http: { body: async req => req }, text: { sent: Boolean }, updateConfig: patch => Object.assign(ctx.config, patch),
@@ -45,6 +45,16 @@ test('一张工单始终由原账号转给主人、引用回复原频道；同�
   assert.deepEqual(sent[1].target, target)
   assert.deepEqual(sent[1].content.map(x => x.type), ['quote','at','text'])
   assert.deepEqual(tools(owner)._tickets_list(), [])
+})
+
+test('群工具只接受本回合的唯一发起人', async () => {
+  const { ctx, receive, target, tools, sent } = fixture()
+  receive()
+  for (const senders of [[], ['friend', 'other'], ['other']]) {
+    ctx.chat.turnSenders = () => senders
+    assert.equal((await tools(target).submit({ summary: '群反馈' })).ok, false)
+  }
+  assert.equal(sent.length, 0)
 })
 
 test('反馈指令把处理结果发回原会话', async () => {

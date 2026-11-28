@@ -8,7 +8,6 @@ import type { Ticket, TicketMedia } from './tickets/types.js'
 
 export const name = '转告主人反馈'
 export const config = Schema.object({
-  enabled: Schema.boolean().default(true).title('启用转告'),
   privateEnabled: Schema.boolean().default(true).title('接受私聊反馈'),
   ownerPrivateEnabled: Schema.boolean().default(false).title('接受主人私聊测试'),
   forwardMode: Schema.union(['natural-sign', 'natural']).default('natural-sign').title('转发署名'),
@@ -30,8 +29,8 @@ export function apply(ctx: Ctx) {
       owners.find(o => o.platform === t.platform && !o.botId)
   }
   const isOwner = (t: Target) => t.type === 'private' && ctx.isOwner(t.id, t.platform, t.botId)
-  const accepts = (t: Target) => ctx.config.enabled !== false && (t.type !== 'private' ||
-    (isOwner(t) ? ctx.config.ownerPrivateEnabled === true : ctx.config.privateEnabled !== false))
+  const accepts = (t: Target) => t.type !== 'private' ||
+    (isOwner(t) ? ctx.config.ownerPrivateEnabled === true : ctx.config.privateEnabled !== false)
   const limit = () => Math.max(1, Math.min(10, Number(ctx.config.perUserPerDay) || 2))
   ctx.on('message', session => {
     const k = key(session.target, session.userId)
@@ -85,11 +84,11 @@ export function apply(ctx: Ctx) {
   ctx.command('反馈 <内容:text>').description('把本条消息作为工单转告本机器人的主人').action(async ({ session, args }) =>
     session.send((await submit(session, args)).message))
   ctx.tool(({ target, sessionId }) => {
-    if (!target || ctx.config.enabled === false) return []
+    if (!target) return []
     const actor = () => {
       if (target.type === 'private') return target.id
-      const speakers = ctx.chat.speakersOf(sessionId)
-      return speakers.length === 1 ? speakers[0].userId : ''
+      const senders = ctx.chat.turnSenders(sessionId) ?? []
+      return senders.length === 1 ? senders[0] : ''
     }
     const visible = (ticket: Ticket) => sameAccount(target, ticket.target)
     const tools = []
