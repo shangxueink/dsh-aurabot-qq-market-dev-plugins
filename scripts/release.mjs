@@ -105,14 +105,17 @@ function collect(dir, main) {
 }
 
 function ensureRelease(tag, asset, sha256) {
+  let release
   try {
-    execFileSync('gh', ['release', 'view', tag], { stdio: 'ignore' })
-    console.log(`  Release ${tag} 已存在，跳过发布`)
-    return
+    release = JSON.parse(execFileSync('gh', ['release', 'view', tag, '--json', 'assets'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }))
   } catch {
-    // 不存在就发
+    execFileSync('gh', ['release', 'create', tag, asset, '--target', process.env.GITHUB_SHA || 'main', '--title', tag, '--notes', 'sha256: ' + sha256], { stdio: 'inherit' })
+    return
   }
-  execFileSync('gh', ['release', 'create', tag, asset, '--target', process.env.GITHUB_SHA || 'main', '--title', tag, '--notes', `sha256: ${sha256}`], { stdio: 'inherit' })
+  const published = release.assets.find(entry => entry.name === basename(asset))
+  if (!published || published.digest !== 'sha256:' + sha256) {
+    throw Error(tag + ' 已发布的文件与当前构建不同，请递增插件版本')
+  }
 }
 
 async function buildAndPackage(dir, pkg) {
@@ -124,10 +127,10 @@ async function buildAndPackage(dir, pkg) {
   const files = collect(dir, main)
   const entry = await import(pathToFileURL(join(dir, main)).href)
   const settings = (entry.config ?? entry.Config)?.toSettings?.()
-  if (settings?.length) {
-    const manifest = { ...pkg, aurabot: { ...pkg.aurabot, settings } }
-    files.set('package.json', Buffer.from(JSON.stringify(manifest, null, 2) + '\n'))
-  }
+  const metadata = { ...pkg.aurabot }
+  delete metadata.artifact
+  if (settings?.length) metadata.settings = settings
+  files.set('package.json', Buffer.from(JSON.stringify({ ...pkg, aurabot: metadata }, null, 2) + '\n'))
   const buffer = makeZip(files)
 
   const tag = `${pkg.name.replace('/', '-')}-v${pkg.version}`

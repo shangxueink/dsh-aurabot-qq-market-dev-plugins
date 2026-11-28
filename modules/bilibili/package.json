@@ -1,0 +1,32 @@
+{
+  "name": "bilibili",
+  "version": "2.0.0-beta.3",
+  "description": "浏览 B 站视频与分 P，用会话中的机器人分享公开视频和图像",
+  "type": "module",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "aurabot": {
+    "displayName": "哔哩哔哩",
+    "category": "social",
+    "capabilities": [
+      "network",
+      "filesystem",
+      "plugin-config"
+    ],
+    "minPluginVersion": "2.0.0-beta.1",
+    "api": 2,
+    "platforms": [
+      "*"
+    ],
+    "reloadOnConfig": true,
+    "panel": "./dist/panel.js"
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.22.tgz",
+    "@types/node": "^22.20.5",
+    "typescript": "^5.6.3"
+  }
+}

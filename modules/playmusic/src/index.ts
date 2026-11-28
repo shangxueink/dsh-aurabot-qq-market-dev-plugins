@@ -6,7 +6,7 @@ import { rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { searchBili, resolveBili, downloadTo } from './providers/bilibili.js'
 import { searchNetease, songUrlNetease } from './providers/netease.js'
-import { findFfmpeg, extractAudio } from './audio/ffmpeg.js'
+import { extractAudio } from './audio/ffmpeg.js'
 import { PlayCache, cacheKey, type PlaySource } from './cache/store.js'
 import { resolveProxy } from './utils/fetch-race.js'
 
@@ -14,10 +14,8 @@ import { Schema, h, type Ctx, type Target } from '@aurabot/plugin-api'
 import { readFile } from 'node:fs/promises'
 
 interface Settings {
-  enabled: boolean
   source: PlaySource
   targetMinutes: number
-  proxy: string
   ownerOnly: boolean
   commandEnabled: boolean
   commandName: string
@@ -36,10 +34,8 @@ const DEFAULT_PROMPT = [
 ].join('\n')
 
 const DEFAULTS: Settings = {
-  enabled: true,
   source: 'both',
   targetMinutes: 10,
-  proxy: '',
   ownerOnly: false,
   commandEnabled: true,
   commandName: 'music',
@@ -70,10 +66,8 @@ function esc(text: string): string {
 
 export const name = '语音点歌'
 export const config = Schema.object({
-  enabled: Schema.boolean().default(true).title('启用点歌'),
   source: Schema.union(['both', 'bilibili', 'netease']).default('both').title('搜索来源'),
   targetMinutes: Schema.natural().min(4).max(30).default(10).title('最长时长（分钟）'),
-  proxy: Schema.string().default('').title('搜索代理'),
   ownerOnly: Schema.boolean().default(false).title('仅主人可用'),
   commandEnabled: Schema.boolean().default(true).title('注册点歌指令'),
   commandName: Schema.string().default('music').title('指令名'),
@@ -84,19 +78,18 @@ export function apply(ctx: Ctx) {
   const log = ctx.logger
   const s = (): Settings => ({ ...DEFAULTS, ...ctx.config })
   const cache = new PlayCache(ctx.dataDir())
-  const toolAllowed = (target?: Target): target is Target => Boolean(target && s().enabled &&
+  const toolAllowed = (target?: Target): target is Target => Boolean(target &&
     (!s().ownerOnly || (target.type === 'private' && ctx.isOwner(target.id, target.platform, target.botId))))
 
   /** 校验并取当前生效的参数（会夹到合法范围）。 */
-  function effective(): { source: PlaySource; targetSec: number; proxy: string } {
+  function effective(): { source: PlaySource; targetSec: number } {
     const st = s()
     const source: PlaySource = (['bilibili', 'netease', 'both'] as PlaySource[]).includes(st.source)
       ? st.source
       : 'both'
     const minutes = Math.max(4, Math.min(30, Math.round(Number(st.targetMinutes) || 10)))
     const targetSec = minutes * 60
-    const proxy = String(st.proxy || '').trim()
-    return { source, targetSec, proxy }
+    return { source, targetSec }
   }
 
   const PER_LIMIT = 5
@@ -107,7 +100,7 @@ export function apply(ctx: Ctx) {
     netease: Awaited<ReturnType<typeof searchNetease>>
     errors: string[]
   }> {
-    const { source, proxy } = effective()
+    const { source } = effective()
     const errors: string[] = []
     let bili: Awaited<ReturnType<typeof searchBili>> = []
     let netease: Awaited<ReturnType<typeof searchNetease>> = []
@@ -117,7 +110,7 @@ export function apply(ctx: Ctx) {
     const jobs: Array<Promise<void>> = []
     if (wantBili) {
       jobs.push(
-        searchBili(song, { limit: PER_LIMIT, proxy }).then(
+        searchBili(song, { limit: PER_LIMIT }).then(
           (rows) => {
             bili = rows
           },
@@ -129,7 +122,7 @@ export function apply(ctx: Ctx) {
     }
     if (wantNetease) {
       jobs.push(
-        searchNetease(song, { limit: PER_LIMIT, proxy }).then(
+        searchNetease(song, { limit: PER_LIMIT }).then(
           (rows) => {
             netease = rows
           },
@@ -175,8 +168,8 @@ export function apply(ctx: Ctx) {
       .replace(/\{\{\s*perLimit\s*\}\}/g, String(PER_LIMIT))
   }
 
-  if (!findFfmpeg()) {
-    log.warn('[点歌] 没找到 ffmpeg，点歌会失败。设 PLAYMUSIC_FFMPEG 环境变量或把 ffmpeg 放进 PATH')
+  if (!ctx.ffmpeg?.path()) {
+    log.warn('[点歌] 没找到 ffmpeg，点歌会失败。请在 FFmpeg 服务页配置或下载 FFmpeg')
   }
   log.info('[点歌] 已启动，缓存目录：' + cache.dir)
 
@@ -257,7 +250,7 @@ export function apply(ctx: Ctx) {
   const command = String(s().commandName || 'music').trim().replace(/^[/／]/, '')
   if (s().commandEnabled && /^[\w-]+$/.test(command)) {
     ctx.command(command + ' [song:text]').description('搜索歌曲并发送语音').action(async ({ session, args }) => {
-      if (!s().enabled || (s().ownerOnly && !ctx.isOwner(session))) return
+      if (s().ownerOnly && !ctx.isOwner(session)) return
       const song = args.trim()
       if (!song) return session.send('点歌用法：/' + command + ' 歌名（可带歌手）')
       await session.send('正在找《' + song + '》的原唱…')
@@ -270,10 +263,10 @@ export function apply(ctx: Ctx) {
       if (!result.ok) await session.send(result.message)
     })
   }
-  ctx.rule(kind => !s().enabled || (kind === 'social' && s().ownerOnly) ? '' : renderPrompt())
+  ctx.rule(kind => kind === 'social' && s().ownerOnly ? '' : renderPrompt())
 
   ctx.server.get('/status', async () => {
-      const bin = findFfmpeg()
+      const bin = ctx.ffmpeg?.path()
       const eff = effective()
       return {
         ok: true,
@@ -283,9 +276,8 @@ export function apply(ctx: Ctx) {
         sourceLabel: SOURCE_LABEL[eff.source],
         targetSec: eff.targetSec,
         targetMinutes: Math.round(eff.targetSec / 60),
-        proxy: eff.proxy || null,
-        proxyMode: resolveProxy(eff.proxy).kind,
-        proxyChannels: resolveProxy(eff.proxy).channels,
+        proxyMode: resolveProxy().kind,
+        proxyChannels: resolveProxy().channels,
         commandEnabled: Boolean(s().commandEnabled),
         commandName: String(s().commandName || 'music'),
       }
@@ -303,10 +295,10 @@ async function playSong(
   platform: 'bilibili' | 'netease',
   key: string,
   title: string,
-  effective: () => { source: PlaySource; targetSec: number; proxy: string },
+  effective: () => { source: PlaySource; targetSec: number },
 ): Promise<any> {
   if (!ctx.bots.get(target.botId, target.platform)?.supports('voice')) return { ok: false, message: '该机器人不支持发送语音' }
-  const { targetSec, proxy } = effective()
+  const { targetSec } = effective()
   const ck = cacheKey({ platform, key, targetSec, startSec: 0 })
   const hit = cache.get(ck)
   if (hit) {
@@ -327,7 +319,7 @@ async function playSong(
     let downloadUrl: string
     let resolvedTitle = String(title || '').trim()
     if (platform === 'bilibili') {
-      const info = await resolveBili(key, { proxy })
+      const info = await resolveBili(key)
       downloadUrl = info.url
       resolvedTitle = resolvedTitle || info.title
     } else {
@@ -340,7 +332,7 @@ async function playSong(
     const ext = platform === 'netease' ? '.mp3' : '.mp4'
     const srcFile = join(work, key.replace(/[^0-9A-Za-z]/g, '') + ext)
     await downloadTo(downloadUrl, srcFile)
-    await extractAudio(srcFile, out, { startSec: 0, targetSec })
+    await extractAudio(ctx.ffmpeg, srcFile, out, { startSec: 0, targetSec })
     const sent = await sendVoice(ctx, target, out, resolvedTitle)
     if (!sent) return { ok: false, message: '下载好了但语音条没发出去（可能网关没连上）' }
     return {

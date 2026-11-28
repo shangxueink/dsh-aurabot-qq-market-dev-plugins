@@ -165,7 +165,7 @@ async function requestChannel(
   options: RaceOptions,
   readBody: boolean,
 ): Promise<Response> {
-  const signal = combineSignals(outerSignal, timeoutMs)
+  const signal = combineSignals(init.signal ? AbortSignal.any([outerSignal, init.signal]) : outerSignal, timeoutMs)
   let response: Response
 
   if (channel === 'proxy' && config.kind === 'apifox') {

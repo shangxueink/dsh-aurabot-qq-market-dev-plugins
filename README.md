@@ -1,20 +1,14 @@
-# auramod 示例插件仓库
+# AuraBot 社区插件
 
-两个可用的 AuraBot 插件，顺便当作插件市场的接入样例：一个仓库放多个插件，push 之后 Actions 自动构建、发 Release、把产物地址回写到 `package.json`。
+本仓库开发并发布以下模块。市场以各模块目录下的 package.json 收录发行版本。
 
-## 收录了什么
-
-| 模块 | 作用 |
-| --- | --- |
-| `modules/tell-owner` | 转告主人反馈：托话记成工单送达主人，主人回复时自动引用原消息回群 |
-| `modules/playmusic` | 语音点歌：哔哩哔哩 / 网易云搜原唱，下载抽成 mp3 发语音条，不需要任何 Cookie |
-
-两个都在市场的收录表里：
-
-```
-https://raw.githubusercontent.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/main/modules/tell-owner/package.json
-https://raw.githubusercontent.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/main/modules/playmusic/package.json
-```
+- 哔哩哔哩 · bilibili
+- QQ 空间 · qzone
+- QQ 工具箱 · qq-toolkit
+- WebQQ · webqq
+- 语音点歌 · playmusic
+- 转告主人反馈 · tell-owner
+- 指令切换模型 · model-switch
 
 ## 目录约定
 

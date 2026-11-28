@@ -26,3 +26,17 @@ test('自定义指令只允许主人修改当前账号的当前会话，卸载�
   await run({ session, args: '1' })
   assert.equal(writes.length, 2)
 })
+
+test('只回复序号也可以选择模型和该模型的思考强度', async () => {
+  const bot = { id: 'second', platform: 'test', selfId: 'me', status: 'online' }
+  const target = { platform: 'test', botId: 'second', type: 'group', id: 'room' }
+  const row = { provider: 'local', model: 'example', reasoning: { efforts: ['low', 'high'] } }
+  const writes = [], sent = [], answers = ['1', '2']
+  const model = { get: () => null, list: async () => [row], set: (...args) => writes.push(args), setEffort: (...args) => writes.push(args) }
+  let run
+  apply({ config: { groupChats: true }, isOwner: () => true, bots: { get: () => bot },
+    llm: { config: { model } }, effect() {}, command() { return { alias() { return this }, action(fn) { run = fn } } } })
+  await run({ session: { bot, target, isPrivate: false, send: text => sent.push(text), prompt: () => answers.shift() }, args: '' })
+  assert.equal(sent.length, 3)
+  assert.deepEqual(writes, [[target, 'me', row], [target, 'me', row, 'high']])
+})

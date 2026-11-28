@@ -240,10 +240,7 @@ function makeEnv(settingsPatch = {}) {
 const groupChat = (patch = {}) => ({ kind: 'group', chatId: `group:${GROUP}`, userId: OTHER, groupId: GROUP, nickname: '小明', ...patch })
 const ownerChat = (patch = {}) => ({ kind: 'private', chatId: `private:${OWNER}`, userId: OWNER, groupId: '', nickname: '主人', ...patch })
 
-test('总开关关掉后点歌工具都不给', () => {
-  const env = makeEnv({ enabled: false })
-  assert.deepEqual(env.toolsFor(groupChat()), [])
-})
+
 
 test('默认能搜能放：两个工具都在（search + sendsong）', () => {
   const env = makeEnv()
@@ -402,28 +399,7 @@ test('targetMinutes：分钟滑块 4~30 夹取，默认 10（=600 秒）', async
   assert.equal((await high.routes.get('/status')()).targetSec, 1800, '高于 30 分钟夹到 30 = 1800 秒')
 })
 
-test('proxy：填自定义前缀代理时，搜索会同时打直连和该代理两条路', async () => {
-  const realFetch = globalThis.fetch
-  const hits = []
-  globalThis.fetch = async (url) => {
-    hits.push(String(url))
-    return jsonResponse({
-      code: 0,
-      data: [{ bvid: 'BV1zzzzzzzzz', video: { title: '多幸运 原唱' }, stat: { duration: '04:12', video: 100 }, owner: { name: 'UP' } }],
-    })
-  }
-  try {
-    const env = makeEnv({ source: 'bilibili', proxy: 'https://px.example.com/' })
-    const tool = env.toolNamed(groupChat(), 'social', 'shangxue_playmusic_search')
-    const r = await tool.execute({ song: '多幸运' })
-    assert.equal(r.ok, true)
-    assert.ok(hits.some((u) => u.startsWith('https://api.xingzhige.com/')), '应有直连请求')
-    assert.ok(hits.some((u) => u.startsWith('https://px.example.com/https://api.xingzhige.com/')), '应有走自定义代理的请求')
-    assert.ok(!hits.includes(APIFOX_PROXY), '填了自定义代理就不该再用 apifox')
-  } finally {
-    globalThis.fetch = realFetch
-  }
-})
+
 
 test('proxy：留空时走直连 + 内置 apifox 并行', async () => {
   const realFetch = globalThis.fetch
@@ -450,26 +426,7 @@ test('proxy：留空时走直连 + 内置 apifox 并行', async () => {
   }
 })
 
-test('proxy：填 direct 时只走直连，不碰 apifox', async () => {
-  const realFetch = globalThis.fetch
-  const hits = []
-  globalThis.fetch = async (url) => {
-    hits.push(String(url))
-    return jsonResponse({
-      code: 0,
-      data: [{ bvid: 'BV1zzzzzzzzz', video: { title: '多幸运 原唱' }, stat: { duration: '04:12', video: 100 }, owner: { name: 'UP' } }],
-    })
-  }
-  try {
-    const env = makeEnv({ source: 'bilibili', proxy: 'direct' })
-    const tool = env.toolNamed(groupChat(), 'social', 'shangxue_playmusic_search')
-    const r = await tool.execute({ song: '多幸运' })
-    assert.equal(r.ok, true)
-    assert.ok(hits.every((u) => u.startsWith('https://api.xingzhige.com/')), '只应有直连请求')
-  } finally {
-    globalThis.fetch = realFetch
-  }
-})
+
 
 // ---------------- 单独的点歌指令 /music ----------------
 
@@ -542,4 +499,27 @@ test('默认提示词：只点原唱、含工具名与判断维度', () => {
   assert.match(text, /shangxue_playmusic_search/)
   assert.match(text, /shangxue_playmusic_sendsong/)
   assert.match(text, /时长、发布者、标题/, '应含原唱判断维度')
+})
+
+test('双通道下载丢弃 HTML，只落盘有效媒体', async t => {
+  const { downloadTo } = await import('../lib/providers/bilibili.js')
+  const { readFileSync, readdirSync, rmSync } = await import('node:fs')
+  const dir = mkdtempSync(join(tmpdir(), 'playmusic-race-'))
+  const original = globalThis.fetch
+  t.after(() => { globalThis.fetch = original; rmSync(dir, { recursive: true, force: true }) })
+  const bytes = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(64, 1)])
+  const calls = []
+  globalThis.fetch = async (url, init) => {
+    calls.push(url)
+    if (init.method === 'POST') {
+      await new Promise(resolve => setTimeout(resolve, 10))
+      return new Response(bytes)
+    }
+    return new Response('<html>not an audio file</html>')
+  }
+  const file = join(dir, 'song.mp3')
+  await downloadTo('https://example.org/audio', file)
+  assert.deepEqual(readFileSync(file), bytes)
+  assert.deepEqual(readdirSync(dir), ['song.mp3'])
+  assert.equal(calls.length, 2)
 })

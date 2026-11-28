@@ -1,0 +1,30 @@
+{
+  "name": "webqq",
+  "version": "2.0.0-beta.2",
+  "description": "在控制台打开本机托管的 Stapxs QQ Lite，连接你的 OneBot 服务",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "main": "lib/index.js",
+  "aurabot": {
+    "displayName": "WebQQ",
+    "category": "platform",
+    "platforms": [
+      "qq"
+    ],
+    "capabilities": [
+      "network"
+    ],
+    "api": 2,
+    "minPluginVersion": "2.0.0-beta.16"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/build-web.mjs",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.22.tgz",
+    "@types/node": "^22.20.5",
+    "fflate": "0.8.2",
+    "typescript": "^5.6.3"
+  }
+}

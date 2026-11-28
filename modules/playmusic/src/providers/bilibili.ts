@@ -175,19 +175,59 @@ export async function resolveBili(bvid: string, { proxy }: { proxy?: string } = 
   return { url: directUrl, title: String(video.title || '').trim() }
 }
 
-/** 下载直链到 dest（本地文件路径）。文件下载一般直连即可，不走代理。 */
+function mediaHeader(bytes: Uint8Array) {
+  const head = Buffer.from(bytes.subarray(0, 16))
+  const text = head.toString('latin1')
+  return text.startsWith('ID3') || text.startsWith('fLaC') || text.startsWith('OggS') ||
+    text.startsWith('RIFF') || text.slice(4, 8) === 'ftyp' || text.startsWith('FLV') ||
+    (head[0] === 0xff && (head[1] & 0xe0) === 0xe0) || head.subarray(0, 4).toString('hex') === '1a45dfa3'
+}
+
 export async function downloadTo(url: string, dest: string): Promise<string> {
-  const r = await fetch(url, {
-    headers: { 'user-agent': UA, referer: 'https://www.bilibili.com/' },
-    signal: AbortSignal.timeout(300_000),
-  })
-  if (!r.ok) throw new Error(`下载失败 HTTP ${r.status}`)
-  const buf = Buffer.from(await r.arrayBuffer())
-  if (!buf.length) throw new Error('下载到的文件是空的')
-  if (buf.length > 400 * 1024 * 1024) throw new Error('视频太大了')
-  const { mkdirSync, writeFileSync } = await import('node:fs')
   const { dirname } = await import('node:path')
-  mkdirSync(dirname(dest), { recursive: true })
-  writeFileSync(dest, buf)
-  return dest
+  const { mkdir, rename, rm } = await import('node:fs/promises')
+  const { createWriteStream } = await import('node:fs')
+  const { pipeline } = await import('node:stream/promises')
+  const { Transform } = await import('node:stream')
+  const { randomUUID } = await import('node:crypto')
+  await mkdir(dirname(dest), { recursive: true })
+  const stop = new AbortController()
+  const limit = 400 * 1024 * 1024
+  async function download(channel: 'direct' | 'proxy') {
+    const file = dest + '.' + randomUUID() + '.part'
+    try {
+      const response = await fetchRace(url, { headers: { 'user-agent': UA, referer: 'https://www.bilibili.com/' }, signal: stop.signal },
+        { channels: [channel], timeoutMs: 300000, readBody: false })
+      if (!response.body) throw Error('下载没有返回内容')
+      let length = 0
+      let header = Buffer.alloc(0)
+      const check = new Transform({ transform(chunk: Buffer, _enc, done) {
+        length += chunk.length
+        if (length > limit) return done(Error('媒体文件超过 400 MiB'))
+        if (header.length < 16) {
+          header = Buffer.concat([header, chunk.subarray(0, 16 - header.length)])
+          if (header.length === 16 && !mediaHeader(header)) return done(Error('响应并非音频或视频'))
+        }
+        done(null, chunk)
+      } })
+      await pipeline(response.body as unknown as AsyncIterable<Uint8Array>, check, createWriteStream(file, { flags: 'wx' }), { signal: stop.signal })
+      if (length < 16) throw Error('媒体内容不完整')
+      return file
+    } catch (error) {
+      await rm(file, { force: true })
+      throw error
+    }
+  }
+  const downloads = [download('direct'), download('proxy')]
+  try {
+    const file = await Promise.any(downloads)
+    stop.abort()
+    await rename(file, dest)
+    return dest
+  } finally {
+    stop.abort()
+    for (const result of await Promise.allSettled(downloads)) {
+      if (result.status === 'fulfilled') await rm(result.value, { force: true })
+    }
+  }
 }
