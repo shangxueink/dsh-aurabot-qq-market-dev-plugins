@@ -1,4 +1,5 @@
 {
-  "playmusic": "1.0.1",
-  "tell-owner": "1.0.2"
+  "playmusic": "2.0.0-beta.1",
+  "tell-owner": "2.0.0-beta.2",
+  "model-switch": "2.0.0-beta.1"
 }
