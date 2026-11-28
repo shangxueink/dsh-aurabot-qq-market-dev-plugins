@@ -4,6 +4,7 @@ declare const ui: any
 declare const call: (path: string, body?: any) => Promise<any>
 
 interface PanelProps {
+  running?: boolean
   toast(message: string, kind?: string): void
 }
 
@@ -23,7 +24,13 @@ export default function PlaymusicPanel(props: PanelProps) {
       .catch(function (e) { toast(e.message, 'err'); setBusy(false); });
   }
 
-  React.useEffect(function () { load(); }, []);
+  React.useEffect(function () {
+    if (props.running !== false) load();
+  }, [props.running]);
+
+  if (props.running === false) {
+    return h(ui.Card, { title: '点歌状态' }, '插件已停用。可以先保存点歌配置，启用后在这里查看运行状态。');
+  }
 
   var body;
   if (!info) {

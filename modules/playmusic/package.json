@@ -1,6 +1,6 @@
 {
   "name": "playmusic",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "点歌：搜哔哩哔哩/网易云的原唱，按匹配度挑最优一首，下载后抽成 mp3 当语音条发到当前会话。不需要任何 Cookie",
   "type": "module",
   "private": true,
