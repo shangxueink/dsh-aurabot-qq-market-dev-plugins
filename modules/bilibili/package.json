@@ -19,7 +19,12 @@
       "*"
     ],
     "reloadOnConfig": true,
-    "panel": "./dist/panel.js"
+    "panel": "./dist/panel.js",
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/bilibili-v2.0.0-beta.3/bilibili-v2.0.0-beta.3.zip",
+      "sha256": "6a132bb297bd753d342aa9c725c717a7cdebc6f00b7e9bba4821a65d0d7fea5b",
+      "size": 22390
+    }
   },
   "scripts": {
     "build": "node build.mjs"
