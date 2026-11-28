@@ -90,7 +90,7 @@ export default function TellOwnerPanel(props: PanelProps) {
     var trs = rows.map(function (r: any) {
       var nameCell = h('td', { style: tdStyle },
         h('b', null, r.nickname || '（未知昵称）'),
-        h('span', { className: 'ab-small ab-muted' }, ' (' + r.userId + ')'));
+        h('span', { className: 'ab-small ab-muted' }, ' (' + JSON.parse(r.userId)[2] + ')'));
 
       var groupCell = h('td', { style: tdStyle },
         h('span', { className: 'ab-small', style: { wordBreak: 'break-all' } }, r.groups || '—'));

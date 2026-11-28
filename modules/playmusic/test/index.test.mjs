@@ -7,7 +7,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import mod from '../lib/index.js'
+import { apply } from '../lib/index.js'
 import { toSeconds, scoreCandidate, fetchJson, searchBili } from '../lib/providers/bilibili.js'
 import { searchNetease, songUrlNetease } from '../lib/providers/netease.js'
 import { cacheKey } from '../lib/cache/store.js'
@@ -209,72 +209,33 @@ function makeEnv(settingsPatch = {}) {
   const toolBuilders = []
   const rules = []
   const routes = new Map()
-  const msgHandlers = []
   const sentTexts = []
-  let settings = {}
-  const api = {
-    id: 'shangxue-playmusic',
-    dir,
-    log: { info() {}, warn() {}, error() {}, debug() {} },
-    config: () => ({}),
-    settings: () => settings,
-    saveSettings: (p) => {
-      settings = { ...settings, ...p }
-      return settings
-    },
-    dataDir: (...parts) => join(dir, ...parts),
-    sendVoiceFile: async (chatId, file, note) => {
-      sentVoices.push({ chatId, file, note })
-      return { message_id: 'v1' }
-    },
-    sendSegments: async (chatId, segs, note) => {
-      const t = (segs || []).filter((s) => s && s.type === 'text').map((s) => s.data?.text || '').join('')
-      if (t) sentTexts.push({ chatId, text: t })
-      return { message_id: 's1' }
-    },
-    onebot: async () => ({}),
-    isOwner: (uid) => String(uid) === String(OWNER),
-    tool: (builder) => {
-      toolBuilders.push(builder)
-      return () => {}
-    },
-    defineTool: (spec) => spec,
-    rule: (fn) => {
-      rules.push(fn)
-      return () => {}
-    },
-    route: (path, handler) => {
-      routes.set(path, handler)
-      return () => {}
-    },
-    on: (event, fn) => {
-      if (event === 'message') msgHandlers.push(fn)
-      return () => {}
-    },
-    core: { http: { body: async () => ({}) } },
+  const commands = new Map()
+  const targetOf = chat => ({ platform: 'sandbox', botId: 'music-bot', id: String(chat.kind === 'private' ? chat.userId : (chat.groupId || GROUP)), type: chat.kind })
+  const ctx = {
+    config: settingsPatch, logger: { info() {}, warn() {} }, dataDir: (...parts) => join(dir, ...parts),
+    isOwner: x => String(x?.userId || x) === String(OWNER),
+    tool: fn => toolBuilders.push(fn), defineTool: x => x, rule: fn => rules.push(fn),
+    command: name => ({ description: () => ({ action: fn => commands.set(name.split(' ')[0], fn) }) }),
+    server: { get: (path, fn) => routes.set(path, fn) },
+    bots: { get: () => ({ supports: cap => cap === 'voice' }) },
+    sendTo: async (target, voice) => { sentVoices.push({ target, voice }); return 'receipt' },
+    text: { sent: Boolean },
   }
-  settings = { ...(mod.defaults || {}) }
-  const exported = mod.setup(api)
-  settings = { ...settings, ...settingsPatch }
+  const exported = apply(ctx)
   function toolsFor(chat, level = 'social') {
-    const out = []
-    for (const b of toolBuilders) {
-      const r = b({ chat, level })
-      if (Array.isArray(r)) out.push(...r)
-      else if (r) out.push(r)
-    }
-    return out
+    return toolBuilders.flatMap(build => build({ target: targetOf(chat), level }) || [])
   }
-  const toolNamed = (chat, level, name) => toolsFor(chat, level).find((t) => t.name === name)
-  // 模拟一条消息经过所有 message 处理器，返回是否被接管（truthy）
+  const toolNamed = (chat, level, name) => toolsFor(chat, level).find(t => t.name === name)
   async function feedMessage(msg) {
-    for (const fn of msgHandlers) {
-      const claimed = await fn(msg)
-      if (claimed) return true
-    }
-    return false
+    const [, name, args] = /^\/(\w+)\s*(.*)$/.exec(msg.text) || []
+    if (!commands.has(name) || (ctx.config.ownerOnly && !ctx.isOwner(msg))) return false
+    const send = async text => sentTexts.push({ text })
+    const result = await commands.get(name)({ args, session: { ...msg, target: targetOf(msg), send } })
+    if (result) await send(result)
+    return true
   }
-  return { dir, api, exported, sentVoices, sentTexts, toolsFor, toolNamed, rules, routes, msgHandlers, feedMessage, settings: () => settings }
+  return { dir, exported, sentVoices, sentTexts, toolsFor, toolNamed, rules, routes, feedMessage }
 }
 
 const groupChat = (patch = {}) => ({ kind: 'group', chatId: `group:${GROUP}`, userId: OTHER, groupId: GROUP, nickname: '小明', ...patch })
@@ -380,7 +341,7 @@ test('sendsong 工具：缓存命中直接发语音条，不再下载', async ()
   assert.equal(r.ok, true)
   assert.equal(r.cached, true)
   assert.equal(env.sentVoices.length, 1, '发了一条语音条')
-  assert.equal(env.sentVoices[0].chatId, `group:${GROUP}`)
+  assert.equal(env.sentVoices[0].target.id, String(GROUP))
 })
 
 test('sendsong 工具：platform 非法直接报错', async () => {
@@ -528,7 +489,7 @@ test('指令：默认 /music 命中缓存时发提示+语音条并接管消息',
     const claimed = await env.feedMessage({ kind: 'group', chatId: `group:${GROUP}`, userId: OTHER, groupId: GROUP, text: '/music 多幸运' })
     assert.equal(claimed, true, '应接管消息')
     assert.equal(env.sentVoices.length, 1, '发了一条语音条')
-    assert.ok(env.sentTexts.some((t) => /去找《多幸运》/.test(t.text)), '应有「去找…稍等」提示')
+    assert.ok(env.sentTexts.some((t) => /正在找《多幸运》/.test(t.text)), '应有「去找…稍等」提示')
   } finally {
     globalThis.fetch = realFetch
   }

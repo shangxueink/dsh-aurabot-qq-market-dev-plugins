@@ -1,6 +1,6 @@
 {
   "name": "tell-owner",
-  "version": "1.0.2",
+  "version": "2.0.0-beta.1",
   "description": "群里/私聊有人托话，记成工单送达主人；主人处理完，机器人自己找对工单回群引用原消息告诉本人",
   "type": "module",
   "private": true,
@@ -17,17 +17,13 @@
       "network",
       "plugin-internals"
     ],
-    "minPluginVersion": "1.2.0",
-    "api": 1,
+    "minPluginVersion": "2.0.0-beta.16",
+    "api": 2,
     "platforms": [
-      "qq"
+      "*"
     ],
     "requires": [],
-    "artifact": {
-      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/tell-owner-v1.0.2/tell-owner-v1.0.2.zip",
-      "sha256": "6c89f181cd7092edc552441841551021dc17ffd13c61faa232cff63bdd0052aa",
-      "size": 19628
-    }
+    "reloadOnConfig": true
   },
   "scripts": {
     "build": "node build.mjs",
@@ -36,6 +32,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.16.tgz"
   }
 }

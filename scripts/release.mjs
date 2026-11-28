@@ -6,7 +6,7 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, sep } from 'node:path'
+import { basename, delimiter, dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { crc32, deflateRawSync } from 'node:zlib'
 
@@ -22,7 +22,26 @@ const writeJson = (path, value) => {
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, JSON.stringify(value, null, 2) + '\n')
 }
-const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
+function previewOwner() {
+  if (process.env.AURABOT_PREVIEW_OWNER) return process.env.AURABOT_PREVIEW_OWNER
+  if (REPO) return REPO.split('/')[0]
+  try {
+    const origin = execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+    return /github\.com[/:]([a-z0-9-]+)\/[^/]+$/i.exec(origin.trim())?.[1] || 'preview'
+  } catch { return 'preview' }
+}
+
+function run(cmd, args, cwd) {
+  const env = { ...process.env }
+  if (args.includes('--ignore-scripts')) delete env.npm_config_allow_scripts
+  if (cmd === 'npm' && process.platform === 'win32') {
+    const cli = [env.npm_execpath, ...[dirname(process.execPath), ...(env.PATH || '').split(delimiter)]
+      .map(dir => join(dir, 'node_modules/npm/bin/npm-cli.js'))]
+      .find(path => path && basename(path) === 'npm-cli.js' && existsSync(path))
+    if (!cli) throw new Error('找不到 npm-cli.js，请通过 npm 运行构建')
+    execFileSync(process.execPath, [cli, ...args], { cwd, env, stdio: 'inherit' })
+  } else execFileSync(cmd, args, { cwd, env, stdio: 'inherit' })
+}
 
 /** 最小的 zip 写入：文件顺序、时间都固定，同样内容得到同样的字节。 */
 function makeZip(files) {
@@ -93,7 +112,7 @@ function ensureRelease(tag, asset, sha256) {
   } catch {
     // 不存在就发
   }
-  execFileSync('gh', ['release', 'create', tag, asset, '--title', tag, '--notes', `sha256: ${sha256}`], { stdio: 'inherit' })
+  execFileSync('gh', ['release', 'create', tag, asset, '--target', process.env.GITHUB_SHA || 'main', '--title', tag, '--notes', `sha256: ${sha256}`], { stdio: 'inherit' })
 }
 
 function buildAndPackage(dir, pkg) {
@@ -122,6 +141,8 @@ function main() {
   const state = existsSync(STATE_FILE) ? readJson(STATE_FILE) : {}
   const seen = new Set()
   const published = []
+  const preview = []
+  const owner = DRY ? previewOwner() : undefined
 
   for (const entry of readdirSync(MODULES, { withFileTypes: true })) {
     if (!entry.isDirectory() || entry.name.startsWith('.')) continue
@@ -131,23 +152,33 @@ function main() {
 
     const pkg = readJson(pkgPath)
     seen.add(pkg.name)
-    if (state[pkg.name] === pkg.version) {
+    if (!DRY && state[pkg.name] === pkg.version) {
       console.log(`- ${pkg.name}@${pkg.version} 没有变化，跳过`)
       continue
     }
 
     console.log(`+ 构建 ${pkg.name}@${pkg.version}`)
     const result = buildAndPackage(dir, pkg)
-    pkg.aurabot = pkg.aurabot || {}
-    pkg.aurabot.artifact = { url: result.url, sha256: result.sha256, size: result.size }
-    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
-    state[pkg.name] = pkg.version
+    // dry-run 只验构建：不写 artifact 地址、不记版本。
+    // 写进去的 URL 会缺 GITHUB_REPOSITORY（变成 https://github//…），
+    // 状态文件被提前记上版本还会让下一次真正的 CI 直接跳过这个版本。
+    if (DRY) {
+      const manifestPath = join(DIST,'manifests',pkg.name,'package.json')
+      const artifact = { url: 'https://preview.invalid/' + result.file, sha256: result.sha256, size: result.size }
+      writeJson(manifestPath, { ...pkg, aurabot: { ...pkg.aurabot, artifact } })
+      preview.push(JSON.stringify({ url: manifestPath, owner }))
+    } else {
+      pkg.aurabot = pkg.aurabot || {}
+      pkg.aurabot.artifact = { url: result.url, sha256: result.sha256, size: result.size }
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
+      state[pkg.name] = pkg.version
+    }
     published.push(`${pkg.name}@${pkg.version} → ${result.file}（${result.size} 字节）`)
   }
 
   // 模块被删掉后，状态里也不留
   for (const name of Object.keys(state)) if (!seen.has(name)) delete state[name]
-  writeJson(STATE_FILE, state)
+  if (!DRY) writeJson(STATE_FILE, state)
 
   if (!published.length) {
     console.log('没有需要发布的模块')
@@ -156,6 +187,8 @@ function main() {
   console.log(published.join('\n'))
 
   if (DRY) {
+    mkdirSync(DIST,{recursive:true})
+    writeFileSync(join(DIST,'registry.jsonl'),preview.join('\n')+'\n')
     console.log('dry-run：产物在 dist/，没有发 Release、没有提交')
     return
   }

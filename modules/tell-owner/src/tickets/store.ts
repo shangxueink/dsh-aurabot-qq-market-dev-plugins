@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, copyFileSync, unlinkSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Ticket, TicketMedia } from './types.js'
 
 export interface TicketStoreOptions {
-  /** api.dataDir() 的路径 */
+  /** 模块的工单目录。 */
   dir: string
 }
 
@@ -30,6 +30,8 @@ function statusLabel(status: Ticket['status']): string {
   if (status === 'closed') return '🔒 已关闭'
   return '🟡 待处理'
 }
+
+export const submitterKey = (t: Ticket['target'], userId: string) => JSON.stringify([t.platform, t.botId, userId])
 
 export class TicketStore {
   private dir: string
@@ -124,7 +126,7 @@ export class TicketStore {
       lastAt: number
     }>()
     for (const t of this.tickets) {
-      const uid = String(t.userId)
+      const uid = submitterKey(t.target, t.userId)
       let agg = map.get(uid)
       if (!agg) {
         agg = { userId: uid, nickname: t.nickname || '', groupSet: new Set<string>(), topics: [], todayCount: 0, totalCount: 0, lastAt: 0 }
@@ -149,12 +151,12 @@ export class TicketStore {
       const resetAt = this.userResets[agg.userId] || 0
       const from = Math.max(dayStart, resetAt)
       agg.todayCount = this.tickets.filter(
-        (t) => String(t.userId) === agg.userId && t.createdAt >= from && t.createdAt < dayEnd,
+        (t) => submitterKey(t.target, t.userId) === agg.userId && t.createdAt >= from && t.createdAt < dayEnd,
       ).length
       out.push({
         userId: agg.userId,
         nickname: agg.nickname,
-        groups: Array.from(agg.groupSet).join('、'),
+        groups: JSON.parse(agg.userId).slice(0,2).join(' / ') + ' · ' + Array.from(agg.groupSet).join('、'),
         topics: agg.topics.join(' / '),
         todayCount: agg.todayCount,
         totalCount: agg.totalCount,
@@ -224,7 +226,7 @@ export class TicketStore {
     const resetAt = this.userResets[String(userId)] || 0
     const from = Math.max(dayStart, resetAt)
     return this.tickets.filter(
-      (t) => String(t.userId) === String(userId) && t.createdAt >= from && t.createdAt < dayEnd,
+      (t) => submitterKey(t.target, t.userId) === userId && t.createdAt >= from && t.createdAt < dayEnd,
     ).length
   }
 
@@ -257,18 +259,6 @@ export class TicketStore {
     }
   }
 
-  /** 从别处把已有文件复制进 media/。返回保存后的文件名；失败返回空串。 */
-  copyMedia(sourcePath: string, filename: string): string {
-    try {
-      const target = join(this.mediaDir, filename)
-      copyFileSync(sourcePath, target)
-      return filename
-    } catch (error) {
-      return ''
-    }
-  }
-
-  /** 生成 tickets.md 的 markdown 文本（人可读镜像）。 */
   renderMarkdown(): string {
     const lines: string[] = []
     lines.push('# 工单列表')

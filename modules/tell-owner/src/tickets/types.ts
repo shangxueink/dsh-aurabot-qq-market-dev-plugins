@@ -1,3 +1,5 @@
+import type { Target } from '@aurabot/plugin-api'
+
 /** 一条多媒体附件（工单里反馈的图片 / 文件 / 语音）。 */
 export interface TicketMedia {
   /** 保存到 data/media/ 后的文件名（相对 media 目录）；抓取失败时为空 */
@@ -12,6 +14,7 @@ export interface TicketMedia {
 
 /** 一张工单：某人某事反馈给主人，等待主人处理。 */
 export interface Ticket {
+  target: Target
   /** 自增编号，字符串（如 "1"、"2"）；对外展示为 #1 */
   id: string
   /** 打卡时间（毫秒时间戳） */
@@ -19,7 +22,7 @@ export interface Ticket {
   /** 来源会话：group:群号 / private:QQ号 */
   chatId: string
   /** group 或 private */
-  chatKind: 'group' | 'private'
+  chatKind: Target['type']
   /** 群号（群聊时） */
   groupId: string
   /** 发送者 QQ */
