@@ -21,7 +21,12 @@
       "*"
     ],
     "requires": [],
-    "reloadOnConfig": true
+    "reloadOnConfig": true,
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/reverse-gif-v1.0.0/reverse-gif-v1.0.0.zip",
+      "sha256": "e23db77d2360a9df894d5cfb49cd0b853f059acd39de470bfebaa26c55e733cb",
+      "size": 5530
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

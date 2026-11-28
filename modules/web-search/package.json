@@ -21,7 +21,12 @@
       "*"
     ],
     "requires": [],
-    "reloadOnConfig": true
+    "reloadOnConfig": true,
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/web-search-v1.0.0/web-search-v1.0.0.zip",
+      "sha256": "c15789ccbd49daf2c2b73aa28961798a93639066d4f4051b95799b6ba7a6605b",
+      "size": 4654
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

@@ -5,5 +5,7 @@
   "bilibili": "2.0.0-beta.3",
   "qq-toolkit": "2.0.0-beta.1",
   "qzone": "2.0.0-beta.3",
-  "webqq": "2.0.0-beta.2"
+  "webqq": "2.0.0-beta.2",
+  "reverse-gif": "1.0.0",
+  "web-search": "1.0.0"
 }
