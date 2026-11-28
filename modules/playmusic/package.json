@@ -24,9 +24,9 @@
     "requires": [],
     "reloadOnConfig": true,
     "artifact": {
-      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/playmusic-v2.0.0-beta.2/playmusic-v2.0.0-beta.2.zip",
-      "sha256": "893a41617d50c868631186819d97c2ec4033f59d8bfbeb2b3c5e34a2551b927c",
-      "size": 19548
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/playmusic-v2.0.0-beta.3/playmusic-v2.0.0-beta.3.zip",
+      "sha256": "ae29ceb4cb0d1b4152769180c232f0fb4ae57c6cd90f0bc896fe2bfd6f8f915f",
+      "size": 19656
     }
   },
   "scripts": {
