@@ -18,7 +18,12 @@
     "platforms": [
       "qq"
     ],
-    "reloadOnConfig": true
+    "reloadOnConfig": true,
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/qq-toolkit-v2.0.0-beta.1/qq-toolkit-v2.0.0-beta.1.zip",
+      "sha256": "140d20441164f318fef2e306c895d80b61d59f80e129e7a2cf45eb8579624e6a",
+      "size": 27631
+    }
   },
   "scripts": {
     "build": "node build.mjs",

@@ -19,7 +19,12 @@
       "qq"
     ],
     "reloadOnConfig": true,
-    "panel": "./dist/panel.js"
+    "panel": "./dist/panel.js",
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/qzone-v2.0.0-beta.3/qzone-v2.0.0-beta.3.zip",
+      "sha256": "071c1ec3be59cf616822d8d7c37f42636d7053d1fc114abe3c2da05fa9b01dbf",
+      "size": 30695
+    }
   },
   "scripts": {
     "build": "node build.mjs"

@@ -19,7 +19,12 @@
       "*"
     ],
     "requires": [],
-    "reloadOnConfig": true
+    "reloadOnConfig": true,
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/model-switch-v2.0.0-beta.2/model-switch-v2.0.0-beta.2.zip",
+      "sha256": "b6584885cbfcb84d1f9957b72a11f0dd3914316b3eef11ade412479c3f2122f6",
+      "size": 2829
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

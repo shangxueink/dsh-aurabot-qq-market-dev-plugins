@@ -1,5 +1,9 @@
 {
-  "playmusic": "2.0.0-beta.1",
+  "playmusic": "2.0.0-beta.2",
   "tell-owner": "2.0.0-beta.2",
-  "model-switch": "2.0.0-beta.1"
+  "model-switch": "2.0.0-beta.2",
+  "bilibili": "2.0.0-beta.3",
+  "qq-toolkit": "2.0.0-beta.1",
+  "qzone": "2.0.0-beta.3",
+  "webqq": "2.0.0-beta.2"
 }

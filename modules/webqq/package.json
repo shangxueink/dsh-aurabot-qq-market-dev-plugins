@@ -15,7 +15,12 @@
       "network"
     ],
     "api": 2,
-    "minPluginVersion": "2.0.0-beta.16"
+    "minPluginVersion": "2.0.0-beta.16",
+    "artifact": {
+      "url": "https://github.com/shangxueink/dsh-aurabot-qq-market-dev-plugins/releases/download/webqq-v2.0.0-beta.2/webqq-v2.0.0-beta.2.zip",
+      "sha256": "f5995bd54548205a9e2dca9e160da2b7f09e49955bb939950cb57aa4049f1054",
+      "size": 6067350
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/build-web.mjs",
