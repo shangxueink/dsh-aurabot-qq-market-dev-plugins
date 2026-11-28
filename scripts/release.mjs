@@ -161,7 +161,11 @@ async function main() {
 
     const pkg = readJson(pkgPath)
     seen.add(pkg.name)
-    if (!DRY && state[pkg.name] === pkg.version) {
+    const tag = pkg.name.replace('/', '-') + '-v' + pkg.version
+    const asset = pkg.aurabot?.artifact
+    const publishedUrl = 'https://github.com/' + REPO + '/releases/download/' + tag + '/' + tag + '.zip'
+    if (!DRY && state[pkg.name] === pkg.version && asset?.url === publishedUrl &&
+        /^[0-9a-f]{64}$/.test(asset.sha256) && Number.isSafeInteger(asset.size) && asset.size > 0) {
       console.log(`- ${pkg.name}@${pkg.version} 没有变化，跳过`)
       continue
     }
