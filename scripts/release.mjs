@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, delimiter, dirname, join, relative, sep } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { crc32, deflateRawSync } from 'node:zlib'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -115,13 +115,19 @@ function ensureRelease(tag, asset, sha256) {
   execFileSync('gh', ['release', 'create', tag, asset, '--target', process.env.GITHUB_SHA || 'main', '--title', tag, '--notes', `sha256: ${sha256}`], { stdio: 'inherit' })
 }
 
-function buildAndPackage(dir, pkg) {
+async function buildAndPackage(dir, pkg) {
   if (existsSync(join(dir, 'package-lock.json'))) run('npm', ['ci', '--ignore-scripts'], dir)
   else run('npm', ['install', '--ignore-scripts', '--no-package-lock'], dir)
   run('npm', ['run', 'build'], dir)
 
   const main = pkg.main || 'lib/index.js'
   const files = collect(dir, main)
+  const entry = await import(pathToFileURL(join(dir, main)).href)
+  const settings = (entry.config ?? entry.Config)?.toSettings?.()
+  if (settings?.length) {
+    const manifest = { ...pkg, aurabot: { ...pkg.aurabot, settings } }
+    files.set('package.json', Buffer.from(JSON.stringify(manifest, null, 2) + '\n'))
+  }
   const buffer = makeZip(files)
 
   const tag = `${pkg.name.replace('/', '-')}-v${pkg.version}`
@@ -135,7 +141,7 @@ function buildAndPackage(dir, pkg) {
   return { tag, file, url, sha256, size: buffer.length }
 }
 
-function main() {
+async function main() {
   if (!DRY && !REPO) throw new Error('缺 GITHUB_REPOSITORY（CI 里才有），本地请加 --dry-run')
 
   const state = existsSync(STATE_FILE) ? readJson(STATE_FILE) : {}
@@ -158,7 +164,7 @@ function main() {
     }
 
     console.log(`+ 构建 ${pkg.name}@${pkg.version}`)
-    const result = buildAndPackage(dir, pkg)
+    const result = await buildAndPackage(dir, pkg)
     // dry-run 只验构建：不写 artifact 地址、不记版本。
     // 写进去的 URL 会缺 GITHUB_REPOSITORY（变成 https://github//…），
     // 状态文件被提前记上版本还会让下一次真正的 CI 直接跳过这个版本。
@@ -209,4 +215,4 @@ function main() {
   run('git', ['push'], ROOT)
 }
 
-main()
+await main()
