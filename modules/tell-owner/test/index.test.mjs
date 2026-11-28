@@ -47,6 +47,12 @@ test('一张工单始终由原账号转给主人、引用回复原频道；同�
   assert.deepEqual(tools(owner)._tickets_list(), [])
 })
 
+test('反馈指令把处理结果发回原会话', async () => {
+  const {handlers,receive,sent} = fixture(); const replies = []
+  await handlers.submit({session:{...receive(), send: text => replies.push(text)},args:'建议'})
+  assert.equal(sent.length,1); assert.match(replies[0],/工单 #1/)
+})
+
 test('附件从入站元素读取；失败回滚；同一发起人限额按账号分开', async () => {
   const { ctx, receive, routes, tools, target, sent } = fixture()
   receive(target, { elements: [{ type:'image', attrs:{ src:'https://example.test/image' } }] })

@@ -231,8 +231,7 @@ function makeEnv(settingsPatch = {}) {
     const [, name, args] = /^\/(\w+)\s*(.*)$/.exec(msg.text) || []
     if (!commands.has(name) || (ctx.config.ownerOnly && !ctx.isOwner(msg))) return false
     const send = async text => sentTexts.push({ text })
-    const result = await commands.get(name)({ args, session: { ...msg, target: targetOf(msg), send } })
-    if (result) await send(result)
+    await commands.get(name)({ args, session: { ...msg, target: targetOf(msg), send } })
     return true
   }
   return { dir, exported, sentVoices, sentTexts, toolsFor, toolNamed, rules, routes, feedMessage }

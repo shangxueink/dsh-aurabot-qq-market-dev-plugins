@@ -259,15 +259,15 @@ export function apply(ctx: Ctx) {
     ctx.command(command + ' [song:text]').description('搜索歌曲并发送语音').action(async ({ session, args }) => {
       if (!s().enabled || (s().ownerOnly && !ctx.isOwner(session))) return
       const song = args.trim()
-      if (!song) return '点歌用法：/' + command + ' 歌名（可带歌手）'
+      if (!song) return session.send('点歌用法：/' + command + ' 歌名（可带歌手）')
       await session.send('正在找《' + song + '》的原唱…')
       const { bili, netease } = await searchAll(song)
       const pick = bili[0] || netease[0]
-      if (!pick) return '没找到《' + song + '》的原唱'
+      if (!pick) return session.send('没找到《' + song + '》的原唱')
       const result = bili[0]
         ? await playSong(ctx, cache, session.target, 'bilibili', bili[0].bvid, bili[0].title, effective)
         : await playSong(ctx, cache, session.target, 'netease', String(netease[0].id), netease[0].name, effective)
-      return result.ok ? undefined : result.message
+      if (!result.ok) await session.send(result.message)
     })
   }
   ctx.rule(kind => !s().enabled || (kind === 'social' && s().ownerOnly) ? '' : renderPrompt())

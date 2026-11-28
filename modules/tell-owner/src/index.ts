@@ -83,7 +83,7 @@ export function apply(ctx: Ctx) {
     } finally { pending.delete(user) }
   }
   ctx.command('反馈 <内容:text>').description('把本条消息作为工单转告本机器人的主人').action(async ({ session, args }) =>
-    (await submit(session, args)).message)
+    session.send((await submit(session, args)).message))
   ctx.tool(({ target, sessionId }) => {
     if (!target || ctx.config.enabled === false) return []
     const actor = () => {
@@ -116,13 +116,14 @@ export function apply(ctx: Ctx) {
           } finally { pending.delete('#' + ticket.id) }
         } }))
     }
-    if (isOwner(target) || (target.type === 'private' && store.all().some(t => visible(t) && t.userId === target.id))) {
-      tools.push(ctx.defineTool({ name: 'shangxue_tell_owner_delete', description: '按编号删除本账号的工单，发起人可在私聊撤回自己的工单。', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'],
+    if (isOwner(target) || store.all().some(t => visible(t) && t.userId === actor())) {
+      tools.push(ctx.defineTool({ name: 'shangxue_tell_owner_delete', description: '按编号删除本账号的工单，发起人可撤回自己的工单。', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'],
         execute: args => {
+          const caller = actor()
           const deleted: string[] = []
           for (const id of Array.isArray(args.ids) ? args.ids : []) {
             const t = store.get(String(id))
-            if (t && visible(t) && !pending.has('#' + t.id) && (isOwner(target) || (target.type === 'private' && t.userId === target.id))) {
+            if (t && visible(t) && !pending.has('#' + t.id) && (isOwner(target) || (caller && t.userId === caller))) {
               store.remove(t.id); deleted.push(t.id)
             }
           }
