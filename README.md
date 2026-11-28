@@ -9,6 +9,8 @@
 - 语音点歌 · playmusic
 - 转告主人反馈 · tell-owner
 - 指令切换模型 · model-switch
+- 网页搜索 · web-search
+- GIF 图片倒放 · reverse-gif
 
 ## 目录约定
 

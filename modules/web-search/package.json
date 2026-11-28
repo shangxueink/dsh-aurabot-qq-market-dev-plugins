@@ -1,0 +1,35 @@
+{
+  "name": "web-search",
+  "version": "1.0.0",
+  "description": "使用本机浏览器搜索网页，把结果标题、摘要和链接返回给 AI。",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "shangxueink",
+  "main": "lib/index.js",
+  "aurabot": {
+    "displayName": "网页搜索",
+    "category": "tool",
+    "capabilities": [
+      "network",
+      "process",
+      "plugin-config"
+    ],
+    "minPluginVersion": "2.0.0-beta.20",
+    "api": 2,
+    "platforms": [
+      "*"
+    ],
+    "requires": [],
+    "reloadOnConfig": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.6.3",
+    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.22.tgz"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "reverse-gif",
+  "version": "1.0.0",
+  "description": "发送「倒放GIF」后上传动图，通过 FFmpeg 倒放并以图片回复。",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "shangxueink",
+  "main": "lib/index.js",
+  "aurabot": {
+    "displayName": "GIF 图片倒放",
+    "category": "tool",
+    "capabilities": [
+      "network",
+      "filesystem",
+      "process"
+    ],
+    "minPluginVersion": "2.0.0-beta.20",
+    "api": 2,
+    "platforms": [
+      "*"
+    ],
+    "requires": [],
+    "reloadOnConfig": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.6.3",
+    "@aurabot/plugin-api": "file:../../vendor/aurabot-plugin-api-2.0.0-beta.22.tgz"
+  }
+}
